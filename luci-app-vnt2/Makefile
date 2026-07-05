@@ -23,8 +23,8 @@ define Package/$(PKG_NAME)/postinst
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
 INITD=/etc/init.d
 $${INITD}/vnt2 enable
-$${INITD}/rpcd restart
-$${INITD}/vnt2 restart
+$${INITD}/vnt2 start 2>/dev/null || true
+( sleep 3; $${INITD}/rpcd restart ) >/dev/null 2>&1 < /dev/null &
 rm -rf /tmp/luci-*
 
 exit 0
@@ -34,7 +34,7 @@ define Package/$(PKG_NAME)/prerm
 #!/bin/sh
 [ -n "$${IPKG_INSTROOT}" ] && exit 0
 INITD=/etc/init.d
-$${INITD}/vnt2 stop    2>/dev/null || true
+$${INITD}/vnt2 stop 2>/dev/null || true
 rm -rf /tmp/luci-*
 
 exit 0
