@@ -1,16 +1,50 @@
 #!/bin/sh
-# /usr/libexec/vnt2-run.sh  VNT2 wrapper v1.8
+# /usr/libexec/vnt2-run.sh  VNT2 wrapper v1.9
 
 NAME="$1"
 LOG_FILE="$2"
 shift 2
-
+ROUTE_FIX_LOCK="/tmp/vnt2_log/vnt2_route_fixing"
+KILL_RECORD="/tmp/vnt2_log/vnt2_kill_record"
 SELF_PID=$$
 CHECK_INTERVAL=100
 ROUTE_FIXED=0
+KILL_INTERVAL=1800
+DNS_LIST="223.5.5.5 119.29.29.29 180.76.76.76"
 
 log() {
     printf '[%s] >>> %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$1" >> "$LOG_FILE"
+}
+
+_network_ok() {
+    local ip
+    for ip in $DNS_LIST; do
+        ping -c1 -W2 "$ip" > /dev/null 2>&1 && return 0
+    done
+    return 1
+}
+
+_check_and_kill() {
+    local now last_time elapsed
+    now=$(date +%s)
+    last_time=$(grep "^${NAME} " "$KILL_RECORD" 2>/dev/null | awk '{print $2}')
+
+    if [ -z "$last_time" ]; then
+        printf '%s %s\n' "$NAME" "$now" >> "$KILL_RECORD"
+        log "First kill, triggering restart..."
+        kill "$SELF_PID" 2>/dev/null
+        return
+    fi
+
+    elapsed=$((now - last_time))
+    if [ "$elapsed" -ge "$KILL_INTERVAL" ]; then
+        sed -i "/^${NAME} /d" "$KILL_RECORD"
+        printf '%s %s\n' "$NAME" "$now" >> "$KILL_RECORD"
+        log "Kill interval reached, triggering restart..."
+        kill "$SELF_PID" 2>/dev/null
+    else
+        log "Skip kill, last/interval ${elapsed}s/${KILL_INTERVAL}s"
+    fi
 }
 
 rotate_log() {
@@ -39,8 +73,6 @@ format_line() {
                s/\] DEBUG /\]［DEBUG］/g'
 }
 
-ROUTE_FIX_FLAG="/tmp/vnt2_route_fixed_${NAME}"
-
 reader_loop() {
     local count=0 formatted
     while IFS= read -r line; do
@@ -49,18 +81,28 @@ reader_loop() {
 
         case "$line" in
             *"Registration failed"*)
-                log "Detected connection failure, triggering restart..."
-                kill "$SELF_PID" 2>/dev/null
-                ;;
-            *"连接服务器失败"*|*"kind: AlreadyExists"*)
-                if [ "$ROUTE_FIXED" = "0" ]; then
-                    log "Server failure detected, fixing routes..."
-                    ROUTE_FIXED=1
-                    setsid sh -c '/etc/init.d/vnt2 reload' > /dev/null 2>&1 &
+                if [ "$ONLINE" = "0" ]; then
+                    if _network_ok; then
+                        _check_and_kill
+                    else
+                        log "Network unavailable, skip restart..."
+                    fi
                 fi
                 ;;
-            *"已连接服务器"*)
-                ROUTE_FIXED=0
+            *"连接服务器失败"*|*"kind: AlreadyExists"*)
+                if [ "$ROUTE_FIXED" = "0" ] && _network_ok; then
+                    ROUTE_FIXED=1
+                    if mkdir "$ROUTE_FIX_LOCK" 2>/dev/null; then
+                        log "Server failure detected, fixing routes..."
+                        setsid sh -c '/etc/init.d/vnt2 reload' > /dev/null 2>&1 &
+                    fi
+                fi
+                ;;
+            *"public_addr"*)
+                case "$line" in *"0.0.0.0:0"*) ;; *)
+                    ROUTE_FIXED=0
+                    ;;
+                esac
                 ;;
         esac
 

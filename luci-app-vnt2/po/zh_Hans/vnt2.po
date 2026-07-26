@@ -1,6 +1,6 @@
 # VNT2 LuCI i18n Chinese (Simplified)
 # zh-cn
-# v1.3
+# v1.4
 
 msgid ""
 msgstr ""
@@ -944,6 +944,16 @@ msgid "Language pack detected:"
 msgstr "检测到语言包："
 
 #: i18n-map.js (vnt2-run.sh 输出)
+
+msgid "First kill, triggering restart..."
+msgstr "首次终止，正在触发重启……"
+
+msgid "Kill interval reached, triggering restart..."
+msgstr "达到终止间隔，正在触发重启……"
+
+msgid "Skip kill, last/interval"
+msgstr "跳过终止 上次/间隔"
+
 msgid "［INFO］"
 msgstr "［信息］"
 
@@ -956,8 +966,8 @@ msgstr "［错误］"
 msgid "［DEBUG］"
 msgstr "［调试］"
 
-msgid "Detected connection failure, triggering restart..."
-msgstr "检测到连接失败，正在触发重启..."
+msgid "Network unavailable, skip restart..."
+msgstr "网络不可用，跳过重启..."
 
 msgid "Server failure detected, fixing routes..."
 msgstr "检测到服务器故障，正在修复路由..."

@@ -16,11 +16,14 @@ return baseclass.extend({
             ['Route switched but still unreachable, try next...',   _('Route switched but still unreachable, try next...')],
 
             // vnt2-run.sh
+            ['First kill, triggering restart...',                    _('First kill, triggering restart...')],
+            ['Kill interval reached, triggering restart...',         _('Kill interval reached, triggering restart...')],
+            ['Skip kill, last/interval',                    _('Skip kill, last/interval')],
             ['［INFO］',   _('［INFO］')],
             ['［WARN］',   _('［WARN］')],
             ['［ERROR］',  _('［ERROR］')],
             ['［DEBUG］',  _('［DEBUG］')],
-            ['Detected connection failure, triggering restart...',  _('Detected connection failure, triggering restart...')],
+            ['Network unavailable, skip restart...',  _('Network unavailable, skip restart...')],
             ['Server failure detected, fixing routes...',                        _('Server failure detected, fixing routes...')],
             ['Starting:',                        _('Starting:')],
             ['Process exited',                   _('Process exited')],

@@ -18,6 +18,7 @@ IFACE_PREFIX="vnt2"
 RESPAWN_THRESHOLD=3600
 RESPAWN_TIMEOUT=5
 RESPAWN_RETRY=5
+ROUTE_FIX_LOCK="${LOG_DIR}/vnt2_route_fixing"
 
 VNT_PORT_FIELDS="tcp_bind quic_bind ws_bind"
 VNTS_PORT_FIELDS="tcp_bind quic_bind ws_bind server_quic_bind"
@@ -474,6 +475,7 @@ fix_all_routes() {
         _try_fix_cidr "$cidr"
     done < "$_ALL_CIDRS"
     rm -f "$_ALL_CIDRS" "$_FIXED_CIDRS"
+    rmdir "$ROUTE_FIX_LOCK" 2>/dev/null
 }
 
 _cleanup_tun() {
