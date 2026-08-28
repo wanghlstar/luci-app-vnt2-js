@@ -12,6 +12,7 @@ cache_full()  { echo "$CACHE_DIR/$1.full.json"; }
 cache_slim()  { echo "$CACHE_DIR/$1.slim.json"; }
 status_file() { echo "$CACHE_DIR/$1.status";    }
 log_file()    { echo "$CACHE_DIR/$1.log";       }
+event_file()  { echo "$CACHE_DIR/$1.events";     }
 tmp_file()    { echo "$CACHE_DIR/$2";           }
 
 log() {
@@ -19,6 +20,11 @@ log() {
     local msg="[$(date '+%Y-%m-%d %H:%M:%S')] $*"
     echo "$msg" >> "$f"
     LOG_FILE="$f"
+}
+
+event() {
+    local f="$(event_file "$1")"; shift
+    printf '[%s] EVENT %s\n' "$(date '+%Y-%m-%d %H:%M:%S')" "$*" >> "$f"
 }
 
 set_status() {
@@ -152,16 +158,18 @@ cmd_check() {
     local url raw file_ext lines
     local slim_json first_release current_tag assets_slim first_asset fname count line
 
-    rm -f "$(log_file "$proj")" "$(status_file "$proj")" \
+    rm -f "$(log_file "$proj")" "$(event_file "$proj")" "$(status_file "$proj")" \
           "$(cache_full "$proj")" "$(cache_slim "$proj")"
 
     set_status "$proj" "checking"
+    event "$proj" "checking_version project=$proj mirror=$mirror"
     log "$proj" "Checking version: project=$proj mirror=$mirror"
 
     url="$(api_url "$mirror" "$proj")"
     raw="$(curl -fsSL --connect-timeout 10 --max-time 30 "$url" 2>&1 | sed 's/": /":/g')"
 
     if [ -z "$raw" ] || ! echo "$raw" | grep -q '"tag_name"'; then
+        event "$proj" "api_request_failed project=$proj mirror=$mirror"
         log "$proj" "API request failed or no version found"
         set_status "$proj" "error:API request failed, please switch mirror"
         return 1
@@ -216,10 +224,12 @@ EOF
     log "$proj" "Done, found $count versions"
 
     if [ "$count" -eq 0 ]; then
+        event "$proj" "no_matching_file project=$proj"
         set_status "$proj" "error:No matching file found, please switch mirror"
         return 1
     fi
 
+    event "$proj" "version_list_ready count=$count"
     set_status "$proj" "ready:$count"
 }
 
@@ -230,9 +240,11 @@ verify_download() {
     [ -z "$actual" ] && { log "$proj" "sha256sum unavailable, skipping verification"; return 0; }
     log "$proj" "SHA256: $actual"
     if grep -q "$actual" "$(cache_full "$proj")" 2>/dev/null; then
+        event "$proj" "checksum_passed"
         log "$proj" "SHA256 verification passed"
         return 0
     else
+        event "$proj" "checksum_failed"
         log "$proj" "SHA256 verification failed, please re-download"
         rm -f "$tmp"
         return 1
@@ -246,6 +258,7 @@ cmd_download() {
 
     rm -f "$(log_file "$proj")"
     set_status "$proj" "downloading"
+    event "$proj" "download_prepare tag=$tag"
     log "$proj" "Downloading: tag=$tag files=$fnames upx=$upx"
 
     [ ! -f "$(cache_full "$proj")" ] && {
@@ -268,6 +281,7 @@ cmd_download() {
         fi
     done
 
+    event "$proj" "installation_complete installed=${installed:-$fnames}"
     set_status "$proj" "done:${installed:-$fnames}"
 }
 
@@ -336,6 +350,7 @@ _download_and_install() {
     fi
 
     if [ $rc -ne 0 ] || [ ! -s "$f" ]; then
+        event "$proj" "download_failed file=$fname return_code=$rc"
         log "$proj" "Download failed rc=$rc: $fname"
         set_status "$proj" "error:Download failed"
         rm -f "$f"
@@ -345,10 +360,12 @@ _download_and_install() {
     local size
     size="$(wc -c < "$f" | tr -d ' ')"
     log "$proj" "Downloaded: $fname $(format_size "$size")"
+    event "$proj" "download_complete file=$fname"
     set_status "$proj" "downloading:100"
 
     verify_download "$proj" "$f" || return 1
 
+    event "$proj" "installation_started"
     set_status "$proj" "installing"
     if [ "$proj" = "luci-app-vnt2" ]; then
         pm_install "$f" \

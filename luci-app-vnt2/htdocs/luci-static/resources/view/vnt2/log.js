@@ -55,12 +55,13 @@ function getLineColor(line) {
     return '#d4d4d4';
 }
 
-function buildLogLine(timeStr, body, i18n) {
+function buildLogLine(timeStr, body, events) {
     var span = E('span', {'style':'display:block;line-height:1.6;'});
     if (timeStr)
         span.appendChild(E('span', {'style':'color:#6a9153;margin-right:8px;'}, timeStr));
     var color       = getLineColor(body);
-    var displayBody = (i18n && i18n.translate) ? i18n.translate(body) : body;
+    var eventText = events && events.line(body);
+    var displayBody = eventText || body;
     span.appendChild(E('span', {'style':'color:'+color+';'}, displayBody));
     return span;
 }
@@ -89,7 +90,6 @@ return view.extend({
     load: function() {
         return Promise.all([
             L.require('vnt2.common'),
-            L.require('vnt2.i18n-map'),
             callListInstances()
         ]);
     },
@@ -97,9 +97,10 @@ return view.extend({
     render: function(data) {
         var self      = this;
         self._ui      = data[0].VNT2UI;
-        self._i18n    = data[1];
-        var instances = (data[2] && Array.isArray(data[2].instances))
-            ? data[2].instances : [];
+        self._events  = data[0].VNT2Events;
+
+        var instances = (data[1] && Array.isArray(data[1].instances))
+            ? data[1].instances : [];
         self._instances       = instances;
         self._currentInstance = instances.length ? instances[0].name : null;
 
@@ -254,7 +255,7 @@ return view.extend({
                 else if (m2) { timeStr = parseLogreadTime(m2[1]); body = m2[2]; }
             }
             body = body.replace(RE_ISO, '');
-            el.appendChild(buildLogLine(timeStr, body || line, self._i18n));
+            el.appendChild(buildLogLine(timeStr, body || line, self._events));
         });
 
         if (!hasContent)

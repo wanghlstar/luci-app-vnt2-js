@@ -18,6 +18,7 @@ IFACE_PREFIX="vnt2"
 RESPAWN_THRESHOLD=3600
 RESPAWN_TIMEOUT=5
 RESPAWN_RETRY=5
+WEB_TOKEN=""
 ROUTE_FIX_LOCK="${LOG_DIR}/vnt2_route_fixing"
 
 VNT_PORT_FIELDS="tcp_bind quic_bind ws_bind"
@@ -37,6 +38,7 @@ init_paths() {
     v=$(uci -q get vnt2.global.respawn_threshold); [ -n "$v" ] && RESPAWN_THRESHOLD="$v"
     v=$(uci -q get vnt2.global.respawn_timeout);   [ -n "$v" ] && RESPAWN_TIMEOUT="$v"
     v=$(uci -q get vnt2.global.respawn_retry);     [ -n "$v" ] && RESPAWN_RETRY="$v"
+    WEB_TOKEN=$(uci -q get vnt2.global.web_token)
     mkdir -p "$CONFIG_PATH" "$LOG_DIR"
 }
 
@@ -407,8 +409,13 @@ get_bin_args() {
             case "$method" in
                 vnt2_web)
                     wa=$(read_field "$conf" "web_addr")
-                    printf '%s|--addr|%s|--conf|%s' \
-                        "${BIN_PATH}/vnt2_web" "$wa" "$conf"
+                    if [ -n "$WEB_TOKEN" ]; then
+                        printf '%s|--addr|%s|--conf|%s|--token|%s' \
+                            "${BIN_PATH}/vnt2_web" "$wa" "$conf" "$WEB_TOKEN"
+                    else
+                        printf '%s|--addr|%s|--conf|%s' \
+                            "${BIN_PATH}/vnt2_web" "$wa" "$conf"
+                    fi
                     ;;
                 *)
                     printf '%s|--conf|%s' "${BIN_PATH}/vnt2_cli" "$conf"

@@ -770,216 +770,68 @@ msgstr "✓ 运行中"
 msgid "✗ Not running"
 msgstr "✗ 未运行"
 
-#: i18n-map.js (init.d 输出)
-msgid "VNT2: starting all enabled instances..."
-msgstr "VNT2：正在启动所有已启用实例..."
+msgid "Enable instance log"
+msgstr "启用实例日志"
 
-msgid "Starting automatic download of vnt2/vnts2..."
-msgstr "正在自动下载 vnt2/vnts2..."
+msgid "Save instance output to log file"
+msgstr "将实例输出保存到日志文件"
 
-msgid "Start failed: config file does not exist:"
-msgstr "启动失败：配置文件不存在："
+msgid "Disabling this only stops saving logs; fault detection and recovery remain active."
+msgstr "关闭后仅停止保存日志，故障检测和恢复功能仍然有效。"
 
-msgid "Start failed: unable to build startup command"
-msgstr "启动失败：无法构建启动命令"
+msgid "Errors and warnings only"
+msgstr "仅记录错误和警告"
 
-msgid "Start failed: binary is not executable:"
-msgstr "启动失败：二进制文件不可执行："
+msgid "Only save WARN and ERROR output"
+msgstr "仅保存 WARN 和 ERROR 输出"
 
-msgid "Registered type="
-msgstr "已注册 type="
+msgid "Fault detection is still performed for all process output."
+msgstr "所有进程输出仍会参与故障检测。"
 
-msgid "Fix route:"
-msgstr "修复路由："
+msgid "Public IP Check Timeout (s)"
+msgstr "公网 IP 检查超时时间（秒）"
 
-msgid "Route switched but still unreachable, try next..."
-msgstr "路由已切换但仍无法访问，尝试下一个..."
+msgid "Restart if no public IP is received within %d seconds; 0 disables this check."
+msgstr "%d 秒内未获取公网 IP 时重启；设置为 0 可禁用此检查。"
 
-#: i18n-map.js (vnt2-update.sh 输出)
-msgid "[DEP] Installing:"
-msgstr "［依赖］安装："
+msgid "version_checking"
+msgstr "正在检查版本"
 
-msgid "[DEP] Failed to install:"
-msgstr "［依赖］安装失败："
+msgid "download_in_progress"
+msgstr "正在下载"
 
-msgid "[DEP] Installed:"
-msgstr "［依赖］已安装："
+msgid "installation_in_progress"
+msgstr "正在安装"
 
-msgid "Checking version:"
-msgstr "正在检查版本："
+msgid "version_list_ready"
+msgstr "版本列表已就绪"
 
-msgid "API request failed or no version found"
-msgstr "API请求失败或未找到版本"
+msgid "installation_complete"
+msgstr "安装完成"
 
-msgid "API request failed, please switch mirror"
-msgstr "API请求失败，请切换镜像源"
+msgid "update_failed"
+msgstr "更新失败"
 
-msgid "Done, found"
-msgstr "完成，找到"
+msgid "✗ Update task did not start or status was lost"
+msgstr "✗ 更新任务未启动或状态已丢失"
 
-msgid "versions"
-msgstr "个版本"
+msgid "Download failed"
+msgstr "下载失败"
 
 msgid "No matching file found, please switch mirror"
 msgstr "未找到匹配的文件，请切换镜像源"
 
-msgid "No matching file found"
-msgstr "未找到匹配的文件"
+msgid "VNT Web Access Token"
+msgstr "VNT Web 访问令牌"
 
-msgid "SHA256 verification passed"
-msgstr "SHA256验证通过"
+msgid "Generate Random Token"
+msgstr "随机生成令牌"
 
-msgid "SHA256 verification failed, please re-download"
-msgstr "SHA256验证失败，请重新下载"
+msgid "All vnt2_web instances share this token. Empty means each instance generates its own token."
+msgstr "所有 vnt2_web 实例共用此令牌。留空时每个实例自动生成独立令牌。"
 
-msgid "sha256sum unavailable, skipping verification"
-msgstr "sha256sum不可用，跳过验证"
+msgid "Token generation failed"
+msgstr "令牌生成失败"
 
-msgid "Downloaded:"
-msgstr "已下载："
-
-msgid "Cache not found, please check version first"
-msgstr "未找到缓存，请先检查版本"
-
-msgid "Please check upstream version first"
-msgstr "请先检查上游版本"
-
-msgid "Download URL not found:"
-msgstr "下载地址未找到："
-
-msgid "Download URL not found, please re-check version"
-msgstr "下载地址未找到，请重新检查版本"
-
-msgid "Downloading:"
-msgstr "正在下载："
-
-msgid "Total size:"
-msgstr "文件大小："
-
-msgid "PROGRESS:"
-msgstr "下载进度："
-
-msgid "Download failed rc="
-msgstr "下载失败，返回码="
-
-msgid "Download failed(rc="
-msgstr "下载失败（返回码="
-
-msgid "), please switch mirror"
-msgstr "），请切换镜像源"
-
-msgid "Download complete:"
-msgstr "下载完成："
-
-msgid "Starting installation..."
-msgstr "开始安装……"
-
-msgid "Installation succeeded"
-msgstr "安装成功"
-
-msgid "Installation failed"
-msgstr "安装失败"
-
-msgid "Package installation failed"
-msgstr "软件包安装失败"
-
-msgid "File type:"
-msgstr "文件类型："
-
-msgid "UPX compressing:"
-msgstr "UPX压缩："
-
-msgid "UPX succeeded"
-msgstr "UPX压缩成功"
-
-msgid "UPX failed, copying directly"
-msgstr "UPX压缩失败，直接复制"
-
-msgid "Installed:"
-msgstr "已安装："
-
-msgid "Not found:"
-msgstr "未找到："
-
-msgid "Not ELF, skipping:"
-msgstr "非ELF文件，跳过："
-
-msgid "Installation complete:"
-msgstr "安装完成："
-
-msgid "No installable file found"
-msgstr "未找到可安装的文件"
-
-msgid "Unknown file format"
-msgstr "未知文件格式"
-
-msgid "Service action:"
-msgstr "服务操作："
-
-msgid "=== Auto update:"
-msgstr "=== 自动更新："
-
-msgid "Local:"
-msgstr "本地："
-
-msgid "Upstream:"
-msgstr "上游："
-
-msgid "Already up to date, skipping"
-msgstr "已是最新，跳过"
-
-msgid "Already up to date("
-msgstr "已是最新（"
-
-msgid "Updating:"
-msgstr "正在更新："
-
-msgid "Not installed"
-msgstr "未安装"
-
-msgid "Unknown"
-msgstr "未知"
-
-msgid "Language pack detected:"
-msgstr "检测到语言包："
-
-#: i18n-map.js (vnt2-run.sh 输出)
-
-msgid "First kill, triggering restart..."
-msgstr "首次终止，正在触发重启……"
-
-msgid "Kill interval reached, triggering restart..."
-msgstr "达到终止间隔，正在触发重启……"
-
-msgid "Skip kill, last/interval"
-msgstr "跳过终止 上次/间隔"
-
-msgid "［INFO］"
-msgstr "［信息］"
-
-msgid "［WARN］"
-msgstr "［警告］"
-
-msgid "［ERROR］"
-msgstr "［错误］"
-
-msgid "［DEBUG］"
-msgstr "［调试］"
-
-msgid "Network unavailable, skip restart..."
-msgstr "网络不可用，跳过重启..."
-
-msgid "Server failure detected, fixing routes..."
-msgstr "检测到服务器故障，正在修复路由..."
-
-msgid "Starting:"
-msgstr "启动："
-
-msgid "Process exited"
-msgstr "进程已退出"
-
-msgid "Log truncated (exceeded"
-msgstr "日志已截断（超过"
-
-msgid "mkfifo failed"
-msgstr "mkfifo失败"
+msgid "Token must be exactly 64 hexadecimal characters"
+msgstr "令牌必须是 64 位十六进制字符"

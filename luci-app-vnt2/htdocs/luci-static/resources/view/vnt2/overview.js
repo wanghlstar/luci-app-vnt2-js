@@ -23,7 +23,7 @@ var BIN_KEYS = [
 var LINKS = [
     ['http://rustvnt.com',                         _('Official Website')],
     ['https://github.com/vnt-dev/vnt',             'GitHub'],
-    ['https://github.com/luojiang419/VNTC2.0-APP', 'GUIApp'],
+    ['https://github.com/vnt-dev/VntApp/releases', 'GUIApp'],
     ['https://github.com/whzhni1/luci-app-vnt2',   'Luci'],
 ];
 
@@ -576,16 +576,26 @@ return view.extend({
             _('NAT'),_('Upload'),_('Download'),_('Loss Rate')],rows);
     },
 
-    _renderRoute: function(peers) {
-        if (!peers||!peers.length) return msgP(_('No route data available'));
-        if (!peers.some(function(p){return p.route;})) return msgP(_('No route info available'));
+    _renderRoute: function(data) {
+        if (!data || !data.length) return msgP(_('No route data available'));
         var rows=[];
-        peers.forEach(function(p){
-            if (!p.route) return;
-            var r=p.route;
-            rows.push([p.name||p.ip||'-',p.ip||'-',r.addr||'-',r.protocol||'-',
-                r.metric!=null?r.metric:'-',r.rtt!=null?r.rtt+'ms':'-']);
+        data.forEach(function(item) {
+            // vnt2_web 2.0.4: [{ ip, routes: [{ addr, metric, rtt }] }]
+            if (Array.isArray(item.routes)) {
+                item.routes.forEach(function(r) {
+                    rows.push([item.ip||'-',item.ip||'-',r.addr||'-',r.protocol||'-',
+                        r.metric!=null?r.metric:'-',r.rtt!=null?r.rtt+'ms':'-']);
+                });
+                return;
+            }
+            // vnt2_ctrl legacy format: [{ name, ip, route: {...} }]
+            if (item.route) {
+                var r=item.route;
+                rows.push([item.name||item.ip||'-',item.ip||'-',r.addr||'-',r.protocol||'-',
+                    r.metric!=null?r.metric:'-',r.rtt!=null?r.rtt+'ms':'-']);
+            }
         });
+        if (!rows.length) return msgP(_('No route info available'));
         return makeTable([_('Node'),_('IP'),_('Address'),_('Protocol'),_('Metric'),_('RTT')],rows);
     },
 

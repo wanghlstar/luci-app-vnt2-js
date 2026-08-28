@@ -11,14 +11,15 @@ function rpcDeclare(method, params) {
 
 var callGetSystemInfo      = rpcDeclare('get_system_info',      []);
 var callCheckBinaries      = rpcDeclare('check_binaries',       []);
+var callGenerateWebToken   = rpcDeclare('generate_web_token',    []);
 var callGetUpstreamVersion = rpcDeclare('get_upstream_version', ['project', 'mirror']);
 var callGetUpdateStatus    = rpcDeclare('get_update_status',    ['project']);
 var callDoUpdate           = rpcDeclare('do_update',            ['project', 'tag', 'filename', 'upx']);
 var callSaveSettings       = rpcDeclare('save_settings', [
-    'bin_path','config_path','arch','mirror',
+    'bin_path','config_path','arch','mirror','web_token',
     'auto_update','update_interval','upx_compressed',
     'respawn_threshold','respawn_timeout','respawn_retry',
-    'log_max_kb',
+    'log_to_file','log_errors_only','log_max_kb','startup_check_window',
     'fw_vnt_to_lan','fw_lan_to_vnt',
     'fw_vnt_to_wan','fw_wan_to_vnt',
     'fw_vnt_web','fw_vnts_web'
@@ -70,7 +71,6 @@ return view.extend({
     load: function() {
         return Promise.all([
             L.require('vnt2.common'),
-            L.require('vnt2.i18n-map'),
             uci.load('vnt2'),
             callGetSystemInfo(),
             callCheckBinaries()
@@ -80,9 +80,9 @@ return view.extend({
     render: function(data) {
         var self       = this;
         self._ui       = data[0].VNT2UI;
-        self._i18n     = data[1];
-        self._sysinfo  = data[3] || {};
-        self._binaries = data[4] || {};
+        self._events   = data[0].VNT2Events;
+        self._sysinfo  = data[2] || {};
+        self._binaries = data[3] || {};
         window.requestAnimationFrame(function() {
             var initHash = location.hash.replace('#','');
             var footer = document.querySelector('.cbi-page-actions');
@@ -105,13 +105,17 @@ return view.extend({
             g('config_path')               || '/etc/vnt2_config',
             g('arch')                      || 'auto',
             g('mirror')                    || 'github',
+            g('web_token')                 || '',
             boolStr(g('auto_update')),
             parseInt(g('update_interval')) || 7,
             boolStr(g('upx_compressed')),
             parseInt(g('respawn_threshold')) || 3600,
             parseInt(g('respawn_timeout'))   || 5,
             parseInt(g('respawn_retry'))     || 5,
+            boolStr(g('log_to_file')),
+            boolStr(g('log_errors_only')),
             parseInt(g('log_max_kb'))        || 300,
+            parseInt(g('startup_check_window')) || 60,
             boolStr(g('fw_vnt_to_lan')),
             boolStr(g('fw_lan_to_vnt')),
             boolStr(g('fw_vnt_to_wan')),
@@ -121,14 +125,80 @@ return view.extend({
         ];
     },
 
+    _validateSettings: function() {
+        var self = this;
+        var fields = [
+            ['s-bin-path', _('Binary Path')],
+            ['s-config-path', _('Configuration Path')],
+            ['s-arch', _('Device Architecture')],
+            ['s-web-token', _('VNT Web Access Token')],
+            ['s-interval', _('Update Interval (Days)')],
+            ['s-respawn-threshold', _('Failure Threshold (s)')],
+            ['s-respawn-timeout', _('Restart Delay (s)')],
+            ['s-respawn-retry', _('Restart Retries')],
+            ['s-log-max-kb', _('Log Max Size (KB)')],
+            ['s-startup-check-window', _('Public IP Check Timeout (s)')]
+        ];
+        var missing = [];
+        fields.forEach(function(item) {
+            var el = document.getElementById(item[0]);
+            if (el && !(el.value || '').trim()) {
+                missing.push(item[1]);
+                el.classList.add('vnt2-input-error');
+            } else if (el) {
+                el.classList.remove('vnt2-input-error');
+            }
+        });
+        if (missing.length) {
+            self._ui.notify(_('The following required fields are not filled: %s').format(missing.join(', ')), 'error');
+            var first = document.getElementById(fields.filter(function(item) {
+                var el = document.getElementById(item[0]);
+                return el && !(el.value || '').trim();
+            })[0][0]);
+            if (first) first.focus();
+            return false;
+        }
+        return true;
+    },
+
+    _validateWebToken: function() {
+        var el = document.getElementById('s-web-token');
+        if (!el) return true;
+        var value = (el.value || '').trim();
+        var valid = /^[0-9a-fA-F]{64}$/.test(value);
+        var error = document.getElementById('s-web-token-error');
+        if (!valid) {
+            el.classList.add('vnt2-input-error');
+            if (error) error.style.display = 'block';
+            el.focus();
+            return false;
+        }
+        el.classList.remove('vnt2-input-error');
+        if (error) error.style.display = 'none';
+        return true;
+    },
+
     handleSave: function() {
-        return callSaveSettings.apply(null, this._getUciSettings());
+        var self = this;
+        if (!self._validateSettings() || !self._validateWebToken()) return Promise.resolve({ result:'error', code:'invalid_settings' });
+        return callSaveSettings.apply(null, self._getUciSettings()).then(function(r) {
+            if (!r || r.result !== 'ok')
+                self._ui.notify(_('Token must be exactly 64 hexadecimal characters'), 'error');
+            return r;
+        });
     },
 
     handleSaveApply: function() {
         var self = this;
+        if (!self._validateSettings() || !self._validateWebToken()) return Promise.resolve({ result:'error', code:'invalid_settings' });
         return callSaveSettings.apply(null, self._getUciSettings())
-            .then(function() { return ui.changes.apply(); });
+            .then(function(r) {
+                if (!r || r.result !== 'ok') {
+                    self._ui.notify(_('Token must be exactly 64 hexadecimal characters'), 'error');
+                    return r;
+                }
+                return ui.changes.apply();
+            });
     },
 
     handleReset: function() {
@@ -230,6 +300,45 @@ return view.extend({
                     _('Current detected: %s, automatic recognition by auto, or manual specification')
                        .format(self._sysinfo.arch || _('Unknown'))),
                 vui.buildFormRow(_('Download Mirror'), mirrorSel, _('Multiple mirrors ensure successful downloads')),
+                (function() {
+                    var token = E('input', { 'type':'text', 'class':'cbi-input-text',
+                        'id':'s-web-token', 'value':g('web_token') || '',
+                        'style':'width:100%;max-width:360px;box-sizing:border-box;'
+                    });
+                    token.addEventListener('input', function() {
+                        var error = document.getElementById('s-web-token-error');
+                        if (error) error.style.display = 'none';
+                        token.classList.remove('vnt2-input-error');
+                        uci.set('vnt2', 'global', 'web_token', token.value.trim());
+                    });
+                    token.addEventListener('change', function() {
+                        uci.set('vnt2', 'global', 'web_token', this.value.trim());
+                    });
+                    if (!token.value) {
+                        callGenerateWebToken().then(function(r) {
+                            if (r && r.result === 'ok') {
+                                token.value = r.token;
+                                uci.set('vnt2', 'global', 'web_token', r.token);
+                            }
+                        });
+                    }
+                    var generate = E('button', {'type':'button','class':'btn cbi-button-action','style':'margin-left:6px;',
+                        'click':function(){
+                            generate.disabled = true;
+                            callGenerateWebToken().then(function(r){
+                                if (r && r.result === 'ok') { token.value = r.token; uci.set('vnt2','global','web_token',r.token); }
+                                else self._ui.notify(_('Token generation failed'), 'error');
+                            }).catch(function(){ self._ui.notify(_('Token generation failed'), 'error'); })
+                              .finally(function(){ generate.disabled = false; });
+                        }
+                    }, _('Generate Random Token'));
+                    return vui.buildFormRow(_('VNT Web Access Token'), E('div',{},[
+                        token, generate,
+                        E('div', {'id':'s-web-token-error',
+                            'style':'display:none;color:#dc3545;font-size:12px;margin-top:4px;'},
+                            _('Token must be exactly 64 hexadecimal characters'))
+                    ]), _('All vnt2_web instances share this token. Empty means each instance generates its own token.'));
+                })(),
                 vui.buildFormRow(_('Auto Update'),
                     E('label', { 'style': 'cursor:pointer;user-select:none;' }, [
                         (function() {
@@ -270,6 +379,14 @@ return view.extend({
             ]),
             E('div', { 'class': 'cbi-section' }, [
                 E('h3', {}, _('Process Watchdog (Respawn)')),
+                (function() {
+                    var inp = E('input', { 'type':'number', 'class':'cbi-input-text',
+                        'id':'s-startup-check-window', 'value': g('startup_check_window') || '60', 'min':'0', 'max':'3600', 'style':'width:100px;',
+                        'change': function() { uci.set('vnt2', 'global', 'startup_check_window', this.value || '60'); }
+                    });
+                    return vui.buildFormRow(_('Public IP Check Timeout (s)'), inp,
+                        _('Restart if no public IP is received within %d seconds; 0 disables this check.').format(inp.value));
+                })(),
                     ...(function() {
                         var inpThreshold = E('input', { 'type': 'number', 'class': 'cbi-input-text',
                             'id': 's-respawn-threshold',
@@ -313,17 +430,36 @@ return view.extend({
             E('div', { 'class': 'cbi-section' }, [
                 E('h3', {}, _('Log Settings')),
                 ...(function() {
-                    var inpLogMax = E('input', { 'type': 'number', 'class': 'cbi-input-text',
-                        'id': 's-log-max-kb',
-                        'value': g('log_max_kb') || '300', 'min': '50', 'max': '10240', 'style': 'width:100px;',
-                        'input': function() {
-                            uci.set('vnt2', 'global', 'log_max_kb', this.value || '300');
-                            descLogMax.textContent = _('Each instance log truncated at %d KB').format(this.value || '300');
+                    var logEnabled = g('log_to_file') !== '0';
+                    var cbLog = E('input', { 'type': 'checkbox', 'id': 's-log-to-file',
+                        'change': function() {
+                            uci.set('vnt2', 'global', 'log_to_file', this.checked ? '1' : '0');
+                            var box = document.getElementById('s-log-options');
+                            if (box) box.style.display = this.checked ? '' : 'none';
                         }
                     });
-                    var descLogMax = E('span', {}, _('Each instance log truncated at %d KB').format(inpLogMax.value));
+                    if (logEnabled) cbLog.setAttribute('checked', 'checked');
+                    var cbErrors = E('input', { 'type': 'checkbox', 'id': 's-log-errors-only' });
+                    if (g('log_errors_only') === '1') cbErrors.setAttribute('checked', 'checked');
+                    cbErrors.addEventListener('change', function() {
+                        uci.set('vnt2', 'global', 'log_errors_only', this.checked ? '1' : '0');
+                    });
+                    var inpLogMax = E('input', { 'type': 'number', 'class': 'cbi-input-text',
+                        'id': 's-log-max-kb', 'value': g('log_max_kb') || '300',
+                        'min': '50', 'max': '10240', 'style': 'width:100px;',
+                        'change': function() { uci.set('vnt2', 'global', 'log_max_kb', this.value || '300'); }
+                    });
                     return [
-                        vui.buildFormRow(_('Log Max Size (KB)'), inpLogMax, descLogMax),
+                        vui.buildFormRow(_('Enable instance log'), E('label', {'style':'cursor:pointer;user-select:none;'}, [
+                            cbLog, E('span', {'style':'margin-left:6px;'}, _('Save instance output to log file'))
+                        ]), _('Disabling this only stops saving logs; fault detection and recovery remain active.')),
+                        E('div', {'id':'s-log-options', 'style':'display:'+(logEnabled?'':'none')+';'}, [
+                            vui.buildFormRow(_('Errors and warnings only'), E('label', {'style':'cursor:pointer;user-select:none;'}, [
+                                cbErrors, E('span', {'style':'margin-left:6px;'}, _('Only save WARN and ERROR output'))
+                            ]), _('Fault detection is still performed for all process output.')),
+                            vui.buildFormRow(_('Log Max Size (KB)'), inpLogMax,
+                                _('Each instance log truncated at %d KB').format(inpLogMax.value))
+                        ])
                     ];
                 })()
             ]),
@@ -492,8 +628,7 @@ return view.extend({
             if (!line) return;
             var span = document.createElement('span');
             span.style.display = 'block';
-            span.textContent = (self._i18n && self._i18n.translate)
-                ? self._i18n.translate(line) : line;
+            span.textContent = (self._events && self._events.line(line)) || line;
             el.appendChild(span);
         });
         el.scrollTop = el.scrollHeight;
@@ -589,7 +724,7 @@ return view.extend({
 
     _pollStatus: function(project, bid, phase) {
         var tr = function(s) {
-            return (self._i18n && self._i18n.translate) ? self._i18n.translate(s||'') : (s||'');
+            return s || '';
         };
         var self     = this;
         var checkBtn = this._el(bid + '-check-btn');
@@ -634,6 +769,13 @@ return view.extend({
                     return;
                 }
                 stopAll();
+                if (s.status === 'idle') {
+                    if (checkBtn) checkBtn.disabled = false;
+                    if (btn) btn.disabled = false;
+                    self._setStatus(bid, _('✗ Update task did not start or status was lost'), '#dc3545');
+                    self._show(bid + '-mirror-row', true);
+                    return;
+                }
                 if (s.status === 'ready') {
                     if (checkBtn) checkBtn.disabled = false;
                     self._setStatus(bid, _('✓ Found %d versions').format(s.count), '#28a745');
@@ -653,8 +795,11 @@ return view.extend({
                 if (s.status === 'error') {
                     if (checkBtn) checkBtn.disabled = false;
                     if (btn)      btn.disabled      = false;
-                    var msg       = tr(s.msg)       || _('Failed');
-                    self._setStatus(bid, _('✗ %s').format(msg || _('Failed')), '#dc3545');
+                    var msg = (s.event && self._events)
+                        ? self._events.text(s.event, s.args || {})
+                        : ((s.code && self._events) ? self._events.text(s.code, s.args || {}) : '');
+                    msg = msg || tr(s.msg) || _('Failed');
+                    self._setStatus(bid, _('✗ %s').format(msg), '#dc3545');
                     if (s.log) self._showLog(bid, s.log);
                     self._show(bid + '-mirror-row', true);
                     return;

@@ -268,6 +268,37 @@ var VNT2ConfigParser = {
     }
 };
 
+var VNT2Events = {
+    text: function(code, args) {
+        args = args || {};
+        var map = {
+            checking_version: _('Checking version: %s').format(args.project || ''),
+            version_list_ready: _('Found %s versions').format(args.count || ''),
+            download_prepare: _('Preparing to download...'),
+            download_complete: _('Download complete: %s').format(args.file || ''),
+            installation_started: _('Starting installation...'),
+            installation_complete: _('Installation complete: %s').format(args.installed || ''),
+            checksum_passed: _('SHA256 verification passed'),
+            checksum_failed: _('SHA256 verification failed, please re-download'),
+            download_failed: _('Download failed'),
+            api_request_failed: _('API request failed, please switch mirror'),
+            no_matching_file: _('No matching file found, please switch mirror'),
+            download_failed: _('Download failed')
+        };
+        return map[code] || code || '';
+    },
+    line: function(line) {
+        var m = String(line || '').match(/(?:^|\s)EVENT\s+([A-Za-z0-9_]+)(?:\s+(.*))?$/);
+        if (!m) return null;
+        var args = {};
+        (m[2] || '').split(/\s+/).forEach(function(part) {
+            var i = part.indexOf('=');
+            if (i > 0) args[part.substring(0, i)] = part.substring(i + 1);
+        });
+        return VNT2Events.text(m[1], args);
+    }
+};
+
 var VNT2UI = {
 
     notify: function(msg, type) {
@@ -330,5 +361,6 @@ var VNT2UI = {
 
 return L.Class.extend({
     VNT2ConfigParser: VNT2ConfigParser,
-    VNT2UI:           VNT2UI
+    VNT2UI:           VNT2UI,
+    VNT2Events:       VNT2Events
 });

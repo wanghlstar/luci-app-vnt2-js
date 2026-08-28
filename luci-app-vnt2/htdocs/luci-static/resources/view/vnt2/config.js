@@ -636,9 +636,13 @@ function saveConfig(self, oldName, newName, tab, formEl, fields, templateContent
             if (first) first.scrollIntoView({behavior:'smooth', block:'center'});
             return;
         }
-        var content = self._parser.serializeToToml(fields, collectValues(formEl), templateContent);
-        var renamed = !!(oldName && oldName !== newName);
-        callSaveConfig(newName, tab, content, oldName||'').then(function(r) {
+        var values = collectValues(formEl);
+        var templatePromise = callReadTemplate(tab);
+        templatePromise.then(function(templateRes) {
+            var currentTemplate = (templateRes && templateRes.content) || templateContent;
+            var content = self._parser.serializeToToml(fields, values, currentTemplate);
+            var renamed = !!(oldName && oldName !== newName);
+            callSaveConfig(newName, tab, content, oldName||'').then(function(r) {
             if (!r || r.result !== 'ok') {
                 self._ui.notify(_('Save failed: %s').format((r && r.msg)||''), 'error');
                 return;
@@ -677,8 +681,11 @@ function saveConfig(self, oldName, newName, tab, formEl, fields, templateContent
                     toggleView(true);
                     saveListState(self, true);
                 });
+            }).catch(function(err) {
+                self._ui.notify(_('Save error: %s').format(String(err)), 'error');
+            });
         }).catch(function(err) {
-            self._ui.notify(_('Save error: %s').format(String(err)), 'error');
+            self._ui.notify(_('Load failed: %s').format(String(err)), 'error');
         });
     });
 }
