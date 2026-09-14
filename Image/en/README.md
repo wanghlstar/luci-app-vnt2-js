@@ -1,0 +1,8 @@
+![Homepage dark](<Homepage dark.jpeg>)
+![Home page white](<Home page white.jpeg>)
+![Settings](<Settings.jpeg>)
+![Original Edit](<Original Edit.jpeg>)
+![New server configuration](<New server configuration.jpeg>)
+![New client configuration](<New client configuration.jpeg>)
+![Client Configuration](<Client Configuration.jpeg>)
+![Advanced Settings](<Advanced Settings.jpeg>)

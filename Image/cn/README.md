@@ -1,0 +1,8 @@
+![主页深色](<Homepage dark.jpeg>)
+![主页白色](<Home page white.jpeg>)
+![设置](<Settings.jpeg>)
+![原始编辑](<Original Edit.jpeg>)
+![新服务端配置](<New server configuration.jpeg>)
+![新客户端配置](<New client configuration.jpeg>)
+![客户端配置](<Client Configuration.jpeg>)
+![高级设置](<Advanced Settings.jpeg>)

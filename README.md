@@ -1,20 +1,20 @@
 
-# LuCI - VNT2 Networking Management Interface
+# LuCI - VNT2 Networking Management Interface [VNT/VNTS Setup Guide](Image/en_README.md)
 
-> **Language:** [中文](Image/CN_README.md) | [English](/README.md)
+> **Language:** [中文](CN_README.md) | English
 
-# [VNT/VNTS Setup Guide](Image/en/README.md)
 
 > luci-app-vnt2 – A frontend for managing VNT virtual networking on OpenWrt LuCI, supporting multi-instance concurrency, real-time monitoring, one‑click updates, and automatic firewall passthrough.
 
-![Main Preview](Image/en/main.png)
+![Homepage dark](<Image/en/Homepage dark.jpeg>)
+![Home page white](<Image/en/Home page white.jpeg>)
+
+# [More screenshots](Image/en/README.md)
 
 ## ✨ Key Features
 
 ### 🔥 Multi-Instance Operation
 Run multiple VNT client and server instances simultaneously. Each instance is independently configured, started, and stopped – easily join several virtual networks or provide multiple server endpoints at the same time.
-
-![Instance List](Image/en/config_ls.png)
 
 ### 📊 Status Dashboard
 View real-time runtime status, CPU/memory usage, uptime, and version information for each instance.
@@ -22,32 +22,24 @@ View real-time runtime status, CPU/memory usage, uptime, and version information
 ### ⚙️ Client Configuration
 Graphically configure client parameters: Token, IP, MTU, port mapping, STUN servers, etc.
 
-![Client Configuration](Image/en/client_config.png)
 
 ### 🖥️ Server Configuration
 Configure server listening port, virtual subnet, whitelist, WebUI credentials, etc.
 
-![Server Configuration](Image/en/server_config.png)
 
 ### 🌐 Global Settings
 Select update mirror source (GitHub / GitLab / Gitee), auto‑update policy, UPX compression, etc.
 
-![Global Settings](Image/en/settings.png)
-
 ### 📦 Online Update
 One‑click check and download of the latest binary, then automatically install and restart the service.
 
-![Online Update](Image/en/update.png)
 
 ### 📜 Log Viewer
 View real‑time operation logs for each instance, with support for log clearing.
 
-![Log Window](Image/en/log.png)
 
 ### 📜 VNT2 Web UI
 View real‑time status, create configurations, etc.
-
-![VNT2 Web UI](Image/vnt_webui.png)
 
 ### 🔒 Automatic Firewall Configuration
 Automatically open required ports for each instance and create independent firewall zones – no manual intervention needed.
