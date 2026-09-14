@@ -28,7 +28,7 @@ define Package/$(PKG_NAME)/postinst
 INITD=/etc/init.d
 $${INITD}/vnt2 enable
 $${INITD}/vnt2 start 2>/dev/null || true
-( sleep 1; $${INITD}/rpcd reload ) >/dev/null 2>&1 < /dev/null &
+( sleep 1; $${INITD}/rpcd restart ) >/dev/null 2>&1 < /dev/null &
 rm -rf /tmp/luci-*
 
 exit 0
