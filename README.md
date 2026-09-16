@@ -52,6 +52,12 @@ Automatically open required ports for each instance and create independent firew
 
 ### 📥 Installation Instructions
 
+- This LuCI application is built with **UCODE (not Lua)**  
+- Minimum required OpenWrt version: **OpenWrt 22.03 or newer**  
+- **Not compatible with QWRT (based on OpenWrt 21.02)**  
+- Systems running OpenWrt 21.xx or earlier will not be able to run this application properly  
+
+
 ## Run the following command in the terminal to download and install:
 
 ```bash
