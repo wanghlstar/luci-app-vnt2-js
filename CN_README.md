@@ -56,6 +56,11 @@
 
 
 ### 📥 安装说明
+- 本 LuCI 插件基于 **UCODE（非 Lua）** 开发  
+- 需要的最低 OpenWrt 版本：**OpenWrt 22.03 及以上**  
+- **不兼容 QWRT（基于 OpenWrt 21.02 的系统）**  
+- 使用旧版本 OpenWrt（21.xx 或更早）将无法正常运行本插件
+  
 ## 终端执行以下命令下载安装
 ```bash
   curl -fsSL "https://gitlab.com/whzhni/tailscale/-/raw/main/Auto_Install_Script.sh" | sh -s luci-app-vnt2
