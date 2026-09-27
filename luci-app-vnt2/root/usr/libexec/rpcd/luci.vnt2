@@ -34,7 +34,7 @@ const SETTING_DEFS = [
     ["mirror",             "github",          "string"],
     ["web_token",          "",                "string"],
     ["web_addr",           "0.0.0.0:19099", "string"],
-    ["web_enabled",        "1",               "bool"  ],
+    ["web_enabled",        "0",               "bool"  ],
     ["web_data_dir",       "/vnt_config",     "string"],
     ["web_sync_timeout",   "60",              "int"   ],
     ["auto_update",        "0",               "bool"  ],
@@ -100,6 +100,13 @@ function pidFile(name, type)  {
     return `${CFG.run_dir}/vnt2_${name}.${type}.pid`;
 }
 function confFile(name, type) { return `${CFG.config_path}/${name}.${type}`; }
+
+// 删除可选 socket 地址字段的空值:空字符串不是合法 socket 地址,
+// 会导致 vnts2/vnt2 启动时 TOML 解析失败(invalid socket address syntax)
+function sanitizeConfigContent(content) {
+    if (!content) return content;
+    return content.replace(/^[ \t]*(tcp_bind|quic_bind|ws_bind|web_bind|server_quic_bind)[ \t]*=[ \t]*""[ \t]*(#.*)?$/gm, "");
+}
 
 function updFile(p, ext) { return `${DEFAULTS.update_dir}/${p}.${ext}`; }
 
@@ -1090,6 +1097,7 @@ function cmdSaveConfigTemplate(args) {
     if (!rv.ok) return { result:"error", code:rv.code, msg:rv.msg };
     let dir = templateDir(t);
     system(`mkdir -p '${dir}'`);
+    content = sanitizeConfigContent(content);
     if (writefile(`${dir}/${name}.config`, content) == null) return { result:"error", code:"write_failed", msg:"Write failed" };
     return { result:"ok" };
 }
@@ -1438,6 +1446,7 @@ function cmdSaveConfig(args) {
         let pv = validateConfigPortsForSave(name, ct, content, oldName);
         if (!pv.ok) return portValidationError(pv);
     }
+    content = sanitizeConfigContent(content);
     if (!writeFile(confFile(name, ct), content)) {
         return { result: "error", msg: "Write failed", code: "write_failed" };
     }
