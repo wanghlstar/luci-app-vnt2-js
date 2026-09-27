@@ -23,7 +23,7 @@ const LOG_KEY_DEFS = [
     ["web_stop_keys",      "禁用|停用|停止配置|disable|disabled"],
     ["web_delete_keys",    "删除配置|删除|delete config|deleted config|DELETE /api/config"],
     ["fault_restart_keys", "Registration failed"],
-    ["online_keys",        "public_addr"],
+    ["online_keys",        "已连接服务器"],
     ["online_exclude_keys","0.0.0.0:0"],
 ];
 
